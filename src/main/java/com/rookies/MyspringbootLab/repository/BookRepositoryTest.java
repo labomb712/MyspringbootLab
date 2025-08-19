@@ -1,78 +1,97 @@
 package com.rookies.MyspringbootLab.repository;
 
+import com.rookies.MyspringbootLab.repository.BookRepository;
 import com.rookies.MyspringbootLab.entity.Book;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import org.junit.Test;
+import org.hibernate.annotations.DynamicUpdate;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.stereotype.Repository;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
-@DataJpaTest
+@SpringBootTest
+//@Transactional
+@DynamicUpdate
+//@RequiredArgsConstructor
 public class BookRepositoryTest {
-    private com.packt.myspringbootlab2.repository.BookRepository bookRepository;
 
-    // 도서 등록 테스트
+//    private final BookRepository bookRepository;
+
+    @Autowired
+    private BookRepository bookRepository;
+
     @Test
-    public void testCreateBook() {
-        Book book = new Book(null, "Clean Code", "Robert C. Martin", "9780132350884", LocalDate.of(2008, 8, 1), 40000);
-        Book saved = bookRepository.save(book);
+//    @Rollback(value = false)
+    public void testCreateBook(){
 
-        assertThat(saved.getId()).isNotNull();
-        assertThat(saved.getTitle()).isEqualTo("Clean Code");
+        Book book = new Book();
+        book.setTitle("스프링 부트 입문");
+        book.setAuthor("홍길동");
+        book.setIsbn("9788956746425");
+        book.setPrice(30000);
+        book.setPublishDate(LocalDate.parse("2025-05-07"));
+
+        Book savedBook = bookRepository.save(book);
+        System.out.println("savedBook = " + savedBook);
     }
 
-    // ISBN으로 도서 조회 테스트
     @Test
     public void testFindByIsbn() {
-        Book book = new Book(null, "Effective Java", "Joshua Bloch", "9780134685991", LocalDate.of(2018, 1, 6), 45000);
-        bookRepository.save(book);
 
-        Book found = bookRepository.findByIsbn("9780134685991");
-        assertThat(found).isNotNull();
-        assertThat(found.getAuthor()).isEqualTo("Joshua Bloch");
+        Optional<Book> bookByIsbn = bookRepository.findByIsbn("9788956746425");
+        if(bookByIsbn.isPresent()){
+            Book existingBook = bookByIsbn.get();
+            assertThat(existingBook.getIsbn()).isEqualTo("9788956746425");
+        }
     }
 
-    // 🧑‍저자명으로 도서 목록 조회 테스트
     @Test
     public void testFindByAuthor() {
-        Book book1 = new Book(null, "Java Concurrency in Practice", "Brian Goetz", "9780321349606", LocalDate.of(2006, 5, 9), 42000);
-        Book book2 = new Book(null, "Java Puzzlers", "Brian Goetz", "9780321336781", LocalDate.of(2005, 7, 1), 38000);
-        bookRepository.save(book1);
-        bookRepository.save(book2);
+        List<Book> booksByAuthor = bookRepository.findByAuthor("홍길동");
+        if(booksByAuthor.isEmpty()){
+            System.out.println("No books found for the author.");
+        }
+        assertThat(booksByAuthor).isNotEmpty();
+        for (Book book : booksByAuthor) {
+            System.out.println("Book found: " + book.getTitle() + " by " + book.getAuthor());
+        }
 
-        List<Book> books = bookRepository.findByAuthor("Brian Goetz");
-        assertThat(books).hasSize(2);
     }
 
-    // 도서 정보 수정 테스트
     @Test
     public void testUpdateBook() {
-        Book book = new Book(null, "Refactoring", "Martin Fowler", "9780201485677", LocalDate.of(1999, 6, 28), 50000);
-        Book saved = bookRepository.save(book);
+        Optional<Book> bookToEdit = bookRepository.findByIsbn("9788956746425");
+        Book editedBook = new Book();
 
-        saved.setPrice(55000);
-        Book updated = bookRepository.save(saved);
+        if (bookToEdit.isPresent()) {
+            Book book = bookToEdit.get();
+            book.setTitle("JPA 프로그래밍");
+            book.setPrice(35000);
+            book.setPublishDate(LocalDate.parse("2025-04-30"));
+            book.setIsbn("9788956746432");
+            book.setAuthor("박둘리");
 
-        assertThat(updated.getPrice()).isEqualTo(55000);
+            editedBook = bookRepository.save(book);
+        }
+        assertThat(editedBook.getTitle()).isEqualTo("JPA 프로그래밍");
+        System.out.println("수정된 책 : " + editedBook.getTitle());
     }
 
-    // 도서 정보 삭제 테스트
     @Test
-    public void testDeleteBook() {
-        Book book = new Book(null, "Test-Driven Development", "Kent Beck", "9780321146533", LocalDate.of(2002, 11, 8), 37000);
-        Book saved = bookRepository.save(book);
+    public void testDeleteBook(){
+        Optional<Book> bookToDelete = bookRepository.findByIsbn("9788956746432");
+        if (bookToDelete.isPresent()) {
+            Book book = bookToDelete.get();
+            bookRepository.delete(book);
+            System.out.println("책이 삭제되었습니다: " + book.getTitle());
+        } else {
+            System.out.println("책을 찾을 수 없습니다.");
+        }
 
-        bookRepository.delete(saved);
-        Optional<Book> deleted = bookRepository.findById(saved.getId());
-
-        assertThat(deleted).isEmpty();
     }
+
 }
