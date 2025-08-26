@@ -8,7 +8,7 @@ public class BusinessException extends RuntimeException {
     private String message;
     private HttpStatus httpStatus;
 
-    public BusinessException(String message) {
+    public BusinessException(ErrorCode resourceNotFound, String Book, String message, Long id) {
         //417
         this(message, HttpStatus.EXPECTATION_FAILED);
     }
@@ -17,4 +17,9 @@ public class BusinessException extends RuntimeException {
         this.message = message;
         this.httpStatus = httpStatus;
     }
+    public BusinessException(ErrorCode errorCode, Object... args) {
+        this.message = errorCode.formatMessage(args);
+        this.httpStatus = errorCode.getHttpStatus();
+    }
+
 }

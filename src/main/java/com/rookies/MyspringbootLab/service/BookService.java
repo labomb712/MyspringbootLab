@@ -1,9 +1,11 @@
 package com.rookies.MyspringbootLab.service;
 
+import com.rookies.MyspringbootLab.Exception.ErrorCode;
 import com.rookies.MyspringbootLab.dto.BookDTO;
 import com.rookies.MyspringbootLab.entity.Book;
 import com.rookies.MyspringbootLab.Exception.BusinessException;
 import com.rookies.MyspringbootLab.repository.BookRepository;
+import jakarta.persistence.Id;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,20 +35,20 @@ public class BookService {
     @Transactional(readOnly = true)
     public BookDTO.BookResponse getBookById(Long id) {
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("도서를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Book", "id", id));
         return BookDTO.BookResponse.fromEntity(book);
     }
 
     @Transactional(readOnly = true)
     public BookDTO.BookResponse getBookByIsbn(String isbn) {
         Book book = bookRepository.findByIsbn(isbn)
-                .orElseThrow(() -> new BusinessException("도서를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Book", "ISBN", isbn));
         return BookDTO.BookResponse.fromEntity(book);
     }
 
     public BookDTO.BookResponse updateBook(Long id, BookDTO.BookUpdateRequest request) {
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("도서를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Book", "id", id));
 
         if (request.getTitle() != null) book.setTitle(request.getTitle());
         if (request.getAuthor() != null) book.setAuthor(request.getAuthor());
@@ -59,7 +61,7 @@ public class BookService {
 
     public void deleteBook(Long id) {
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("도서를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Book", "id", id));
         bookRepository.delete(book);
     }
 
